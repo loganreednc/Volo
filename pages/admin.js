@@ -7,13 +7,10 @@ export default function AdminDashboard() {
   const [candidates, setCandidates] = useState([]);
   const [selectedMale, setSelectedMale] = useState('');
   const [selectedFemale, setSelectedFemale] = useState('');
-  const [proposalMessage, setProposalMessage] = useState('');
-
-  // State for messaging
+  // State for candidate selection for messaging
   const [selectedCandidate, setSelectedCandidate] = useState('');
-  const [messageStatus, setMessageStatus] = useState('');
 
-  // Fetch all candidates (for both matching and messaging)
+  // Fetch all candidates from your API when the component loads
   useEffect(() => {
     fetch('/api/candidates')
       .then((res) => res.json())
@@ -38,9 +35,9 @@ export default function AdminDashboard() {
     });
     if (res.ok) {
       await res.json();
-      setProposalMessage('Match proposal created successfully!');
+      alert('Match proposal created successfully!');
     } else {
-      setProposalMessage('Error creating match proposal.');
+      alert('Error creating match proposal.');
     }
   };
 
@@ -93,7 +90,6 @@ export default function AdminDashboard() {
         >
           Create Match Proposal
         </button>
-        {proposalMessage && <p className="mt-2">{proposalMessage}</p>}
       </div>
 
       {/* Section 2: Send Message */}
@@ -112,10 +108,7 @@ export default function AdminDashboard() {
             </option>
           ))}
         </select>
-        {selectedCandidate && (
-          <Messaging candidateId={selectedCandidate} />
-        )}
-        {messageStatus && <p className="mt-2 text-green-600">{messageStatus}</p>}
+        {selectedCandidate && <Messaging candidateId={selectedCandidate} />}
       </div>
     </div>
   );
