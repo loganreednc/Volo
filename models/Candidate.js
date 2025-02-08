@@ -1,12 +1,10 @@
 // models/Candidate.js
 import mongoose from 'mongoose';
 
-// If we're running on the client (browser), return a stub to avoid bundling server-only code.
-if (typeof window !== 'undefined') {
-  // On the client, export an empty object.
-  export default {};
-} else {
-  // Define the Candidate schema for server-side use
+let Candidate;
+
+if (typeof window === 'undefined') {
+  // On the server side, define the Candidate schema and model.
   const CandidateSchema = new mongoose.Schema({
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
@@ -23,7 +21,13 @@ if (typeof window !== 'undefined') {
     createdAt: { type: Date, default: Date.now }
   });
 
-  export default mongoose.models.Candidate || mongoose.model('Candidate', CandidateSchema);
+  Candidate = mongoose.models.Candidate || mongoose.model('Candidate', CandidateSchema);
+} else {
+  // On the client side, export an empty object.
+  Candidate = {};
 }
+
+export default Candidate;
+
 
 
