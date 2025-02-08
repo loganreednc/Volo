@@ -150,17 +150,17 @@ export default function Messaging({ candidateId }) {
         >
           {recording ? "Stop Recording" : "Start Recording"}
         </button>
-        
+
         {audioBlob && (
-          <>
-            <audio controls src={URL.createObjectURL(audioBlob)} className="mt-2" />
+          <div className="mt-2">
+            <audio controls src={URL.createObjectURL(audioBlob)} />
             <button
               onClick={sendVoiceMessage}
               className="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-600 mt-2"
             >
               Send Voice Message
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>
