@@ -74,8 +74,8 @@ export default function Messaging({ candidateId }) {
       };
 
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-        setAudioBlob(audioBlob);
+        const recordedBlob = new Blob(audioChunks, { type: "audio/wav" });
+        setAudioBlob(recordedBlob);
       };
 
       recorder.start();
@@ -125,7 +125,12 @@ export default function Messaging({ candidateId }) {
             {msg.audioUrl ? (
               <audio controls src={msg.audioUrl} />
             ) : (
-              <span className="font-medium">{msg.sender === candidateId ? "You" : "Admin"}:</span> {msg.text}
+              <>
+                <span className="font-medium">
+                  {msg.sender === candidateId ? "You" : "Admin"}:
+                </span>{" "}
+                {msg.text}
+              </>
             )}
           </div>
         ))}
@@ -146,7 +151,9 @@ export default function Messaging({ candidateId }) {
       <div className="mt-4">
         <button
           onClick={recording ? stopRecording : startRecording}
-          className={`py-1 px-3 rounded text-white ${recording ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"}`}
+          className={`py-1 px-3 rounded text-white ${
+            recording ? "bg-red-500 hover:bg-red-600" : "bg-green-500 hover:bg-green-600"
+          }`}
         >
           {recording ? "Stop Recording" : "Start Recording"}
         </button>
