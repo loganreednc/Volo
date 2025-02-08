@@ -3,8 +3,10 @@ import { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  // Uncomment the line below if you need to enable experimental features.
-  // experimental: { appDir: false },
+  experimental: {
+    appDir: false,  // Disable the new app directory feature
+  },
 };
 
 export default nextConfig;
+
