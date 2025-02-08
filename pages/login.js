@@ -1,36 +1,37 @@
-export const dynamic = 'force-dynamic';
 // pages/login.js
 export const dynamic = 'force-dynamic';
 
-import { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/router";
 
 export default function Login() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const storedProfile = localStorage.getItem('profile');
-    if (storedProfile) {
-      const profile = JSON.parse(storedProfile);
-      if (
-        profile.email.toLowerCase() === email.toLowerCase() &&
-        profile.password === password
-      ) {
-        router.push('/dashboard');
-      } else {
-        alert('Email or password does not match our records. Please sign up first.');
-      }
+    setError("");
+
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password
+    });
+
+    if (!result.error) {
+      router.push("/dashboard");
     } else {
-      alert('No profile found. Please sign up first.');
+      setError("Invalid email or password.");
     }
   };
 
   return (
     <div className="max-w-md mx-auto p-4 bg-white shadow rounded mt-4">
       <h1 className="text-2xl font-bold mb-6 text-blue-900">Log In</h1>
+      {error && <p className="text-red-500">{error}</p>}
       <form onSubmit={handleLogin}>
         <label className="block font-semibold mb-1">Email:</label>
         <input
@@ -50,7 +51,7 @@ export default function Login() {
         />
         <button
           type="submit"
-          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 w-full"
         >
           Log In
         </button>
@@ -58,6 +59,7 @@ export default function Login() {
     </div>
   );
 }
+
 
 
 

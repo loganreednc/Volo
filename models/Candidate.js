@@ -1,33 +1,32 @@
-// models/Candidate.js
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 
-let Candidate;
+const CandidateSchema = new mongoose.Schema({
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  age: { type: Number, required: true },
+  gender: { type: String, enum: ['male', 'female'], required: true },
+  location: {
+    city: { type: String, required: true },
+    state: { type: String, required: true }
+  },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true, select: false }, // Hide password from queries
+  instagram: { type: String },
+  photoURL: { type: String },
+  createdAt: { type: Date, default: Date.now }
+});
 
-if (typeof window === 'undefined') {
-  // On the server side, define the Candidate schema and model.
-  const CandidateSchema = new mongoose.Schema({
-    firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
-    age: { type: Number },
-    gender: { type: String, enum: ['male', 'female'], required: true },
-    location: {
-      city: { type: String },
-      state: { type: String }
-    },
-    email: { type: String, required: true },
-    password: { type: String, required: true },
-    instagram: { type: String },
-    photoURL: { type: String },
-    createdAt: { type: Date, default: Date.now }
-  });
+// Hash password before saving
+CandidateSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
 
-  Candidate = mongoose.models.Candidate || mongoose.model('Candidate', CandidateSchema);
-} else {
-  // On the client side, export an empty object.
-  Candidate = {};
-}
+export default mongoose.models.Candidate || mongoose.model('Candidate', CandidateSchema);
 
-export default Candidate;
 
 
 
