@@ -1,22 +1,16 @@
-// models/Candidate.js
-import mongoose from 'mongoose';
+// pages/_app.js
+import '../styles/globals.css';
+import Header from '../components/Header';
 
-const CandidateSchema = new mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  age: { type: Number },
-  gender: { type: String, enum: ['male', 'female'], required: true },
-  location: {
-    city: { type: String },
-    state: { type: String }
-  },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  instagram: { type: String },
-  photoURL: { type: String },
-  createdAt: { type: Date, default: Date.now }
-});
+function MyApp({ Component, pageProps }) {
+  return (
+    <>
+      <Header />
+      <Component {...pageProps} />
+    </>
+  );
+}
 
-export default mongoose.models.Candidate || mongoose.model('Candidate', CandidateSchema);
+export default MyApp;
 
 

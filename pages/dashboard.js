@@ -1,5 +1,5 @@
 // pages/dashboard.js
-export const dynamic = "force-dynamic"; // ✅ Prevents SSR issues
+export const dynamic = "force-dynamic"; // ✅ Prevent SSR caching issues
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -25,12 +25,8 @@ export default function Dashboard() {
       fetch(`/api/match-proposals?candidateId=${profile._id}`)
         .then((res) => res.json())
         .then((data) => {
-          // ✅ Ensure JSON-serializable data
-          const cleanedProposals = data.map((proposal) => ({
-            ...proposal,
-            candidateA: JSON.parse(JSON.stringify(proposal.candidateA)),
-            candidateB: JSON.parse(JSON.stringify(proposal.candidateB)),
-          }));
+          // ✅ Convert to JSON-safe format
+          const cleanedProposals = JSON.parse(JSON.stringify(data));
           setProposals(cleanedProposals);
         })
         .catch((err) => console.error(err));
