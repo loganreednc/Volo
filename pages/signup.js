@@ -1,5 +1,8 @@
 // pages/signup.js
-export const dynamic = 'force-dynamic';
+// Force the page to be rendered at request time (server-side)
+export async function getServerSideProps(context) {
+  return { props: {} };
+}
 
 import { useState } from 'react';
 import { useRouter } from 'next/router';
@@ -67,7 +70,7 @@ export default function SignUp() {
       // Sanitize the saved candidate:
       const plainCandidate = JSON.parse(JSON.stringify(savedCandidate));
       localStorage.setItem('profile', JSON.stringify(plainCandidate));
-      // Continue with sending email and redirecting...
+      // Send welcome email via API
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -191,6 +194,7 @@ export default function SignUp() {
     </div>
   );
 }
+
 
 
 
