@@ -1,4 +1,6 @@
 // pages/login.js
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -16,7 +18,7 @@ export default function Login() {
         profile.email.toLowerCase() === email.toLowerCase() &&
         profile.password === password
       ) {
-        router.push('/dashboard'); // Successful login
+        router.push('/dashboard');
       } else {
         alert('Email or password does not match our records. Please sign up first.');
       }
@@ -55,5 +57,6 @@ export default function Login() {
     </div>
   );
 }
+
 
 
