@@ -64,11 +64,10 @@ export default function SignUp() {
     });
     if (res.ok) {
       const savedCandidate = await res.json();
-      // Convert candidate to a plain object to remove any extra Mongoose metadata
+      // Sanitize the saved candidate:
       const plainCandidate = JSON.parse(JSON.stringify(savedCandidate));
-      // Store candidate profile locally for dashboard use
       localStorage.setItem('profile', JSON.stringify(plainCandidate));
-      // Send welcome email via API
+      // Continue with sending email and redirecting...
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 // pages/login.js
 export const dynamic = 'force-dynamic';
 

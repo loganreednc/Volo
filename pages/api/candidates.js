@@ -7,7 +7,6 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-      // Create a new candidate using data from req.body
       const candidate = await Candidate.create(req.body);
       res.status(201).json(candidate);
     } catch (error) {
@@ -15,8 +14,8 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'GET') {
     try {
-      // Use .lean() to convert Mongoose documents to plain objects
-      const candidates = await Candidate.find({}).lean();
+      let candidates = await Candidate.find({}).lean();
+      candidates = JSON.parse(JSON.stringify(candidates));
       res.status(200).json(candidates);
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -25,5 +24,6 @@ export default async function handler(req, res) {
     res.status(405).json({ message: 'Method not allowed' });
   }
 }
+
 
 

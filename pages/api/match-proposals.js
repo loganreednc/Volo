@@ -30,7 +30,6 @@ export default async function handler(req, res) {
       })
         .populate('candidateA candidateB')
         .lean();
-      // Convert proposals to plain objects (removing Mongoose metadata)
       proposals = JSON.parse(JSON.stringify(proposals));
       res.status(200).json(proposals);
     } catch (error) {
@@ -57,6 +56,7 @@ export default async function handler(req, res) {
     res.status(405).json({ message: 'Method not allowed' });
   }
 }
+
 
 
 
