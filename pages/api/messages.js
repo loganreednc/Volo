@@ -11,12 +11,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'candidateId is required' });
     }
     try {
+      // Use .lean() to return plain JavaScript objects
       const messages = await Message.find({
         $or: [
           { sender: candidateId },
           { receiver: candidateId }
         ]
-      }).sort({ createdAt: 1 });
+      })
+        .sort({ createdAt: 1 })
+        .lean();
       return res.status(200).json(messages);
     } catch (error) {
       return res.status(400).json({ error: error.message });
@@ -36,4 +39,5 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 }
+
 
