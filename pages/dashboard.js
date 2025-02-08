@@ -1,13 +1,22 @@
 // pages/dashboard.js
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Dashboard() {
-  // For this demo, we assume the candidate’s ID is stored in localStorage.
-  // In a real application, you would use proper authentication.
-  const candidateId = localStorage.getItem('candidateId');
+  // Create a state variable for candidateId, initially null.
+  const [candidateId, setCandidateId] = useState(null);
   const [proposals, setProposals] = useState([]);
 
-  // Fetch match proposals for this candidate when the component loads
+  // Use useEffect to access localStorage on the client side.
+  useEffect(() => {
+    // Check if window is defined to ensure we're on the client.
+    if (typeof window !== 'undefined') {
+      const storedCandidateId = localStorage.getItem('candidateId');
+      setCandidateId(storedCandidateId);
+    }
+  }, []);
+
+  // Fetch match proposals once candidateId is available.
   useEffect(() => {
     if (candidateId) {
       fetch(`/api/match-proposals?candidateId=${candidateId}`)
@@ -23,11 +32,16 @@ export default function Dashboard() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ proposalId, candidate, approved }),
     });
-    // Refresh proposals after response
+    // Refresh proposals after response.
     const res = await fetch(`/api/match-proposals?candidateId=${candidateId}`);
     const data = await res.json();
     setProposals(data);
   };
+
+  // Until candidateId is set, show a loading message.
+  if (!candidateId) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="max-w-3xl mx-auto p-8">
@@ -74,6 +88,14 @@ export default function Dashboard() {
           </div>
         ))
       )}
+      <div className="mt-4">
+        <Link
+          href="/match"
+          className="text-blue-500 hover:underline cursor-pointer"
+        >
+          View Match Proposal
+        </Link>
+      </div>
     </div>
   );
 }
