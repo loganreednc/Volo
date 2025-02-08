@@ -1,4 +1,6 @@
 // pages/admin.js
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import Messaging from '../components/Messaging';
 
@@ -14,7 +16,7 @@ export default function AdminDashboard() {
     fetch('/api/candidates')
       .then((res) => res.json())
       .then((data) => {
-        // Sanitize candidate data by converting to plain objects
+        // Convert candidate data to plain objects if not already done
         const plainData = JSON.parse(JSON.stringify(data));
         setCandidates(plainData);
       })
@@ -115,6 +117,7 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 
 
 
