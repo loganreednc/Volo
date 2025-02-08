@@ -1,4 +1,6 @@
 // pages/match.js
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 
@@ -7,41 +9,42 @@ export default function Match() {
   const [proposal, setProposal] = useState(null);
   const [status, setStatus] = useState('Pending');
 
-  // Simulate a match proposal when the page loads.
+  // Load candidate profile from localStorage and create a fake match proposal
   useEffect(() => {
-    // Retrieve the current user's profile (Candidate A) from localStorage.
-    const candidateA = JSON.parse(localStorage.getItem('profile'));
-    // Create a fake match candidate (Candidate B) with hardcoded details.
-    const candidateB = {
-      name: 'Jane Smith',
-      age: 28,
-      interests: 'Art, Community, Faith',
-      instagram: '@jane_smith',
-      photo: '/jane.jpg' // Make sure you have an image in the public folder, or use a placeholder URL.
-    };
-    const fakeProposal = { candidateA, candidateB };
-    setProposal(fakeProposal);
+    if (typeof window !== 'undefined') {
+      const storedProfile = localStorage.getItem('profile');
+      // Parse and sanitize candidateA from localStorage
+      let candidateA = storedProfile ? JSON.parse(storedProfile) : null;
+      if (candidateA) {
+        candidateA = JSON.parse(JSON.stringify(candidateA));
+      }
+      // Create a fake candidateB with hardcoded details
+      const candidateB = {
+        firstName: 'Jane',
+        lastName: 'Smith',
+        age: 28,
+        interests: 'Art, Community, Faith',
+        instagram: '@jane_smith',
+        photo: '/jane.jpg' // Ensure this image exists in your public folder or use a placeholder URL
+      };
+      // Create the fake proposal using sanitized candidateA and candidateB
+      const fakeProposal = { candidateA, candidateB };
+      setProposal(fakeProposal);
+    }
   }, []);
 
-  // When the user clicks "Give Green Light", mark the proposal as approved.
-  const handleApprove = () => {
-    setStatus('Approved');
-  };
-
-  // When the user clicks "Pass", mark the proposal as declined.
-  const handlePass = () => {
-    setStatus('Declined');
-  };
-
+  // If the proposal hasn't been set, show a loading message
   if (!proposal) {
-    return <div>Loading match proposal...</div>;
+    return <div className="p-4">Loading match proposal...</div>;
   }
 
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-4">Match Proposal</h1>
       <div className="border p-4 rounded mb-4">
-        <h2 className="text-xl font-semibold mb-2">Potential Match: {proposal.candidateB.name}</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          Potential Match: {proposal.candidateB.firstName} {proposal.candidateB.lastName}
+        </h2>
         <p className="mb-1"><strong>Age:</strong> {proposal.candidateB.age}</p>
         <p className="mb-1"><strong>Interests:</strong> {proposal.candidateB.interests}</p>
         <img
@@ -52,13 +55,13 @@ export default function Match() {
       </div>
       <div className="mb-4">
         <button
-          onClick={handleApprove}
+          onClick={() => setStatus('Approved')}
           className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 mr-2"
         >
           Give Green Light
         </button>
         <button
-          onClick={handlePass}
+          onClick={() => setStatus('Declined')}
           className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
         >
           Pass
@@ -92,4 +95,5 @@ export default function Match() {
     </div>
   );
 }
+
 
