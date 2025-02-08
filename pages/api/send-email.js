@@ -1,34 +1,38 @@
-// pages/api/send-email.js
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-  const { email, subject, text } = req.body;
-  if (!email || !subject || !text) {
-    return res.status(400).json({ error: 'Email, subject, and text are required' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method Not Allowed" });
   }
 
-  // Configure the nodemailer transporter
-  let transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
+  const { recipientEmail, matchName } = req.body;
+
+  if (!recipientEmail || !matchName) {
+    return res.status(400).json({ message: "Missing recipientEmail or matchName" });
+  }
+
+  // Configure the email transporter
+  const transporter = nodemailer.createTransport({
+    service: "gmail", // You can use other services (e.g., Outlook, SMTP)
     auth: {
-      user: "your_ethereal_user@example.com", // Replace with your Ethereal or production credentials
-      pass: "your_ethereal_password"
-    }
+      user: process.env.EMAIL_USER, // Your email (set in .env)
+      pass: process.env.EMAIL_PASS, // App password (set in .env)
+    },
   });
 
+  // Email content
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: recipientEmail,
+    subject: "🎉 You've Got a New Match!",
+    text: `Hi there! You have a new match with ${matchName}. Check your dashboard for details.`,
+  };
+
   try {
-    let info = await transporter.sendMail({
-      from: '"Volo" <noreply@volo.com>',
-      to: email,
-      subject: subject,
-      text: text,
-    });
-    res.status(200).json({ message: 'Email sent', info });
+    await transporter.sendMail(mailOptions);
+    return res.status(200).json({ message: "Email sent successfully!" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error sending email:", error);
+    return res.status(500).json({ message: "Error sending email" });
   }
 }

@@ -22,6 +22,7 @@ export default function Match() {
           age: 28,
           interests: "Art, Community, Faith",
           instagram: "@jane_smith",
+          email: "jane.smith@example.com", // ✅ Added email for notifications
           photo: "/jane.jpg",
         };
         setProposal({ candidateA, candidateB });
@@ -29,6 +30,30 @@ export default function Match() {
       setLoading(false);
     }
   }, []);
+
+  const approveMatch = async () => {
+    setStatus("Approved");
+
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipientEmail: proposal.candidateB.email, // ✅ Send email to match
+          matchName: `${proposal.candidateA.firstName} ${proposal.candidateA.lastName}`,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        console.log("Email sent:", data.message);
+      } else {
+        console.error("Error sending email:", data.message);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   if (loading) {
     return <div className="p-4">Loading match proposal...</div>;
@@ -44,7 +69,7 @@ export default function Match() {
       <div className="border p-4 rounded mb-4">
         <h2 className="text-xl font-semibold mb-2">
           Potential Match: {proposal.candidateB.firstName} {proposal.candidateB.lastName}
-        </h2> {/* ✅ This was missing a closing tag */}
+        </h2>
         <p className="mb-1">
           <strong>Age:</strong> {proposal.candidateB.age}
         </p>
@@ -63,7 +88,7 @@ export default function Match() {
       </div>
       <div className="mb-4">
         <button
-          onClick={() => setStatus("Approved")}
+          onClick={approveMatch} // ✅ Now triggers email notification
           className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 mr-2"
         >
           Give Green Light
@@ -107,8 +132,3 @@ export default function Match() {
     </div>
   );
 }
-
-
-
-
-
