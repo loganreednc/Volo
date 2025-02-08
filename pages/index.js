@@ -1,3 +1,4 @@
+// Redeploy test: updated comment
 // pages/index.js
 import Link from 'next/link';
 
