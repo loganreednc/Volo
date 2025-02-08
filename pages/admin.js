@@ -7,7 +7,7 @@ export default function AdminDashboard() {
   const [selectedFemale, setSelectedFemale] = useState('');
   const [message, setMessage] = useState('');
 
-  // Fetch all candidates from your API when the component loads.
+  // Fetch all candidates from your API when the component loads
   useEffect(() => {
     fetch('/api/candidates')
       .then((res) => res.json())
@@ -29,9 +29,8 @@ export default function AdminDashboard() {
         candidateBId: selectedFemale,
       }),
     });
-
     if (res.ok) {
-      // Await the response without assigning it to an unused variable.
+      // We no longer assign the result to 'proposal' since we don't use it.
       await res.json();
       setMessage('Match proposal created successfully!');
     } else {
@@ -39,7 +38,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Filter candidates by gender (assumes candidate.gender field exists).
+  // Filter candidates by gender (assumes candidate.gender field)
   const maleCandidates = candidates.filter((c) => c.gender === 'male');
   const femaleCandidates = candidates.filter((c) => c.gender === 'female');
 
@@ -89,4 +88,5 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 
