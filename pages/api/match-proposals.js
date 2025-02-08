@@ -1,11 +1,15 @@
 // pages/api/match-proposals.js
-import { connectToDatabase } from '../../lib/db';
-import MatchProposal from '../../models/MatchProposal';
+import { connectToDatabase } from "../../lib/db";
+import MatchProposal from "../../models/MatchProposal";
+import { getSession } from "next-auth/react";
 
 export default async function handler(req, res) {
   await connectToDatabase();
 
-  if (req.method === 'POST') {
+  if (req.method === "POST") {
+    const session = await getSession({ req });
+    if (!session) return res.status(403).json({ error: "Unauthorized" });
+
     const { candidateAId, candidateBId } = req.body;
     try {
       const proposal = await MatchProposal.create({
@@ -13,49 +17,18 @@ export default async function handler(req, res) {
         candidateB: candidateBId,
         candidateAApproved: false,
         candidateBApproved: false,
-        status: 'Pending',
+        status: "Pending",
       });
+
       res.status(201).json(proposal);
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
-  } else if (req.method === 'GET') {
-    const { candidateId } = req.query;
-    try {
-      let proposals = await MatchProposal.find({
-        $or: [
-          { candidateA: candidateId },
-          { candidateB: candidateId }
-        ]
-      })
-        .populate('candidateA candidateB')
-        .lean();
-      proposals = JSON.parse(JSON.stringify(proposals));
-      res.status(200).json(proposals);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  } else if (req.method === 'PATCH') {
-    const { proposalId, candidate, approved } = req.body;
-    try {
-      const proposal = await MatchProposal.findById(proposalId);
-      if (candidate === 'A') {
-        proposal.candidateAApproved = approved;
-      } else if (candidate === 'B') {
-        proposal.candidateBApproved = approved;
-      }
-      if (proposal.candidateAApproved && proposal.candidateBApproved) {
-        proposal.status = 'Confirmed';
-      }
-      await proposal.save();
-      res.status(200).json(proposal);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
   } else {
-    res.status(405).json({ message: 'Method not allowed' });
+    res.status(405).json({ error: "Method not allowed" });
   }
 }
+
 
 
 
