@@ -1,12 +1,30 @@
 // components/Messaging.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import io from "socket.io-client";
+
+let socket;
 
 export default function Messaging({ candidateId }) {
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Fetch messages from API
+  useEffect(() => {
+    if (!candidateId) return;
+
+    socket = io();
+
+    socket.on("receiveMessage", (message) => {
+      setMessages((prevMessages) => [...prevMessages, message]);
+    });
+
+    fetchMessages();
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [candidateId]);
+
   const fetchMessages = async () => {
     setLoading(true);
     try {
@@ -14,38 +32,34 @@ export default function Messaging({ candidateId }) {
       const data = await res.json();
       setMessages(data);
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error("Error fetching messages:", error);
     }
     setLoading(false);
   };
 
-  useEffect(() => {
-    if (candidateId) {
-      fetchMessages();
-    }
-  }, [candidateId]);
-
-  // Function to send a new message
   const sendMessage = async () => {
-    if (newMessage.trim() === '') return;
+    if (newMessage.trim() === "") return;
+
+    const messageData = {
+      sender: candidateId,
+      receiver: "admin",
+      text: newMessage,
+      createdAt: new Date().toISOString(),
+    };
+
     try {
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sender: 'admin', // Admin is sending the message
-          receiver: candidateId, // Candidate receives the message
-          text: newMessage
-        })
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(messageData),
       });
+
       if (res.ok) {
-        setNewMessage('');
-        fetchMessages();
-      } else {
-        console.error('Failed to send message');
+        socket.emit("sendMessage", messageData);
+        setNewMessage("");
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
     }
   };
 
@@ -56,11 +70,9 @@ export default function Messaging({ candidateId }) {
         <p>Loading messages...</p>
       ) : (
         <div className="max-h-60 overflow-y-auto mb-2">
-          {messages.map((msg) => (
-            <div key={msg._id} className="mb-1">
-              <span className="font-medium">
-                {msg.sender === 'admin' ? 'You' : 'Candidate'}:
-              </span>{' '}
+          {messages.map((msg, index) => (
+            <div key={index} className="mb-1">
+              <span className="font-medium">{msg.sender === candidateId ? "You" : "Admin"}:</span>{" "}
               {msg.text}
             </div>
           ))}
@@ -81,5 +93,6 @@ export default function Messaging({ candidateId }) {
     </div>
   );
 }
+
 
 
