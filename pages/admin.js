@@ -3,18 +3,22 @@ import { useState, useEffect } from 'react';
 import Messaging from '../components/Messaging';
 
 export default function AdminDashboard() {
-  // State for match proposals
+  // State for candidate data and for match proposals/messaging
   const [candidates, setCandidates] = useState([]);
   const [selectedMale, setSelectedMale] = useState('');
   const [selectedFemale, setSelectedFemale] = useState('');
-  // State for candidate selection for messaging
   const [selectedCandidate, setSelectedCandidate] = useState('');
+  const [proposalMessage, setProposalMessage] = useState('');
 
-  // Fetch all candidates from your API when the component loads
+  // Fetch all candidates from the API when the component loads
   useEffect(() => {
     fetch('/api/candidates')
       .then((res) => res.json())
-      .then((data) => setCandidates(data))
+      .then((data) => {
+        // Sanitize candidate data to remove any Mongoose metadata
+        const plainData = JSON.parse(JSON.stringify(data));
+        setCandidates(plainData);
+      })
       .catch((err) => console.error(err));
   }, []);
 
@@ -24,7 +28,6 @@ export default function AdminDashboard() {
       alert('Please select one male candidate and one female candidate.');
       return;
     }
-
     const res = await fetch('/api/match-proposals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -41,7 +44,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Filter candidates by gender for match proposals
+  // Filter candidates for dropdowns
   const maleCandidates = candidates.filter((c) => c.gender === 'male');
   const femaleCandidates = candidates.filter((c) => c.gender === 'female');
 
@@ -63,7 +66,7 @@ export default function AdminDashboard() {
               <option value="">Select a male candidate</option>
               {maleCandidates.map((candidate) => (
                 <option key={candidate._id} value={candidate._id}>
-                  {candidate.name || candidate.firstName}
+                  {candidate.firstName} {candidate.lastName}
                 </option>
               ))}
             </select>
@@ -78,7 +81,7 @@ export default function AdminDashboard() {
               <option value="">Select a female candidate</option>
               {femaleCandidates.map((candidate) => (
                 <option key={candidate._id} value={candidate._id}>
-                  {candidate.name || candidate.firstName}
+                  {candidate.firstName} {candidate.lastName}
                 </option>
               ))}
             </select>
@@ -90,9 +93,10 @@ export default function AdminDashboard() {
         >
           Create Match Proposal
         </button>
+        {proposalMessage && <p className="mt-2">{proposalMessage}</p>}
       </div>
 
-      {/* Section 2: Send Message */}
+      {/* Section 2: Messaging */}
       <div className="border p-4 rounded">
         <h2 className="text-xl font-semibold mb-3">Send Message to Candidate</h2>
         <label className="block font-semibold mb-1">Select Candidate:</label>
@@ -113,5 +117,6 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 
 
