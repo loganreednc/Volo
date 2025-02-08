@@ -1,13 +1,19 @@
 // pages/admin.js
 import { useState, useEffect } from 'react';
+import Messaging from '../components/Messaging';
 
 export default function AdminDashboard() {
+  // State for match proposals
   const [candidates, setCandidates] = useState([]);
   const [selectedMale, setSelectedMale] = useState('');
   const [selectedFemale, setSelectedFemale] = useState('');
-  const [message, setMessage] = useState('');
+  const [proposalMessage, setProposalMessage] = useState('');
 
-  // Fetch all candidates from your API when the component loads
+  // State for messaging
+  const [selectedCandidate, setSelectedCandidate] = useState('');
+  const [messageStatus, setMessageStatus] = useState('');
+
+  // Fetch all candidates (for both matching and messaging)
   useEffect(() => {
     fetch('/api/candidates')
       .then((res) => res.json())
@@ -15,6 +21,7 @@ export default function AdminDashboard() {
       .catch((err) => console.error(err));
   }, []);
 
+  // Handler for creating a match proposal
   const handleMatch = async () => {
     if (!selectedMale || !selectedFemale) {
       alert('Please select one male candidate and one female candidate.');
@@ -30,61 +37,86 @@ export default function AdminDashboard() {
       }),
     });
     if (res.ok) {
-      // We no longer assign the result to 'proposal' since we don't use it.
       await res.json();
-      setMessage('Match proposal created successfully!');
+      setProposalMessage('Match proposal created successfully!');
     } else {
-      setMessage('Error creating match proposal.');
+      setProposalMessage('Error creating match proposal.');
     }
   };
 
-  // Filter candidates by gender (assumes candidate.gender field)
+  // Filter candidates by gender for match proposals
   const maleCandidates = candidates.filter((c) => c.gender === 'male');
   const femaleCandidates = candidates.filter((c) => c.gender === 'female');
 
   return (
-    <div className="max-w-3xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
-      <h2 className="text-xl font-semibold mb-4">Candidates List</h2>
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <div>
-          <h3 className="font-bold mb-2">Male Candidates</h3>
-          <select
-            className="border p-2 rounded w-full"
-            value={selectedMale}
-            onChange={(e) => setSelectedMale(e.target.value)}
-          >
-            <option value="">Select a male candidate</option>
-            {maleCandidates.map((candidate) => (
-              <option key={candidate._id} value={candidate._id}>
-                {candidate.name}
-              </option>
-            ))}
-          </select>
+    <div className="max-w-4xl mx-auto p-4 space-y-8">
+      <h1 className="text-3xl font-bold mb-4">Admin Dashboard</h1>
+
+      {/* Section 1: Create Match Proposal */}
+      <div className="border p-4 rounded">
+        <h2 className="text-xl font-semibold mb-3">Create Match Proposal</h2>
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <h3 className="font-bold mb-2">Male Candidates</h3>
+            <select
+              className="border p-2 rounded w-full"
+              value={selectedMale}
+              onChange={(e) => setSelectedMale(e.target.value)}
+            >
+              <option value="">Select a male candidate</option>
+              {maleCandidates.map((candidate) => (
+                <option key={candidate._id} value={candidate._id}>
+                  {candidate.name || candidate.firstName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <h3 className="font-bold mb-2">Female Candidates</h3>
+            <select
+              className="border p-2 rounded w-full"
+              value={selectedFemale}
+              onChange={(e) => setSelectedFemale(e.target.value)}
+            >
+              <option value="">Select a female candidate</option>
+              {femaleCandidates.map((candidate) => (
+                <option key={candidate._id} value={candidate._id}>
+                  {candidate.name || candidate.firstName}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <h3 className="font-bold mb-2">Female Candidates</h3>
-          <select
-            className="border p-2 rounded w-full"
-            value={selectedFemale}
-            onChange={(e) => setSelectedFemale(e.target.value)}
-          >
-            <option value="">Select a female candidate</option>
-            {femaleCandidates.map((candidate) => (
-              <option key={candidate._id} value={candidate._id}>
-                {candidate.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <button
+          onClick={handleMatch}
+          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+        >
+          Create Match Proposal
+        </button>
+        {proposalMessage && <p className="mt-2">{proposalMessage}</p>}
       </div>
-      <button
-        onClick={handleMatch}
-        className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-      >
-        Create Match Proposal
-      </button>
-      {message && <p className="mt-4">{message}</p>}
+
+      {/* Section 2: Send Message */}
+      <div className="border p-4 rounded">
+        <h2 className="text-xl font-semibold mb-3">Send Message to Candidate</h2>
+        <label className="block font-semibold mb-1">Select Candidate:</label>
+        <select
+          className="border p-2 rounded w-full mb-4"
+          value={selectedCandidate}
+          onChange={(e) => setSelectedCandidate(e.target.value)}
+        >
+          <option value="">Select a candidate</option>
+          {candidates.map((candidate) => (
+            <option key={candidate._id} value={candidate._id}>
+              {candidate.firstName} {candidate.lastName}
+            </option>
+          ))}
+        </select>
+        {selectedCandidate && (
+          <Messaging candidateId={selectedCandidate} />
+        )}
+        {messageStatus && <p className="mt-2 text-green-600">{messageStatus}</p>}
+      </div>
     </div>
   );
 }
