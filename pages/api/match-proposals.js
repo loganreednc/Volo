@@ -22,8 +22,8 @@ export default async function handler(req, res) {
   } else if (req.method === 'GET') {
     const { candidateId } = req.query;
     try {
-      // Use .lean() to convert the Mongoose documents into plain objects
-      const proposals = await MatchProposal.find({
+      // Fetch proposals with populated candidateA and candidateB
+      let proposals = await MatchProposal.find({
         $or: [
           { candidateA: candidateId },
           { candidateB: candidateId }
@@ -31,6 +31,10 @@ export default async function handler(req, res) {
       })
         .populate('candidateA candidateB')
         .lean();
+
+      // Convert each proposal to a plain object to remove Mongoose metadata.
+      proposals = proposals.map((proposal) => JSON.parse(JSON.stringify(proposal)));
+
       res.status(200).json(proposals);
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -56,5 +60,6 @@ export default async function handler(req, res) {
     res.status(405).json({ message: 'Method not allowed' });
   }
 }
+
 
 
