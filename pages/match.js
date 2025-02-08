@@ -1,41 +1,41 @@
 // pages/match.js
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import Image from "next/image";
 
 export default function Match() {
   const router = useRouter();
   const [proposal, setProposal] = useState(null);
-  const [status, setStatus] = useState('Pending');
+  const [status, setStatus] = useState("Pending");
+  const [loading, setLoading] = useState(true);
 
-  // Load candidate profile from localStorage and create a fake match proposal
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedProfile = localStorage.getItem('profile');
-      // Parse and sanitize candidateA from localStorage
-      let candidateA = storedProfile ? JSON.parse(storedProfile) : null;
-      if (candidateA) {
-        candidateA = JSON.parse(JSON.stringify(candidateA));
+    if (typeof window !== "undefined") {
+      const storedProfile = localStorage.getItem("profile");
+      if (storedProfile) {
+        const candidateA = JSON.parse(storedProfile);
+        const candidateB = {
+          firstName: "Jane",
+          lastName: "Smith",
+          age: 28,
+          interests: "Art, Community, Faith",
+          instagram: "@jane_smith",
+          photo: "/jane.jpg",
+        };
+        setProposal({ candidateA, candidateB });
       }
-      // Create a fake candidateB with hardcoded details
-      const candidateB = {
-        firstName: 'Jane',
-        lastName: 'Smith',
-        age: 28,
-        interests: 'Art, Community, Faith',
-        instagram: '@jane_smith',
-        photo: '/jane.jpg' // Ensure this image exists in your public folder or use a placeholder URL
-      };
-      // Create the fake proposal using sanitized candidateA and candidateB
-      const fakeProposal = { candidateA, candidateB };
-      setProposal(fakeProposal);
+      setLoading(false);
     }
   }, []);
 
-  // If the proposal hasn't been set, show a loading message
-  if (!proposal) {
+  if (loading) {
     return <div className="p-4">Loading match proposal...</div>;
+  }
+
+  if (!proposal) {
+    return <div className="p-4">No match proposal found.</div>;
   }
 
   return (
@@ -44,48 +44,60 @@ export default function Match() {
       <div className="border p-4 rounded mb-4">
         <h2 className="text-xl font-semibold mb-2">
           Potential Match: {proposal.candidateB.firstName} {proposal.candidateB.lastName}
-        </h2>
-        <p className="mb-1"><strong>Age:</strong> {proposal.candidateB.age}</p>
-        <p className="mb-1"><strong>Interests:</strong> {proposal.candidateB.interests}</p>
-        <img
-          src={proposal.candidateB.photo || 'https://via.placeholder.com/150'}
-          alt="Match"
-          className="w-36 h-36 object-cover rounded"
-        />
+        </h2> {/* ✅ This was missing a closing tag */}
+        <p className="mb-1">
+          <strong>Age:</strong> {proposal.candidateB.age}
+        </p>
+        <p className="mb-1">
+          <strong>Interests:</strong> {proposal.candidateB.interests}
+        </p>
+        <div className="relative w-36 h-36">
+          <Image
+            src={proposal.candidateB.photo || "https://via.placeholder.com/150"}
+            alt="Match"
+            layout="fill"
+            objectFit="cover"
+            className="rounded"
+          />
+        </div>
       </div>
       <div className="mb-4">
         <button
-          onClick={() => setStatus('Approved')}
+          onClick={() => setStatus("Approved")}
           className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 mr-2"
         >
           Give Green Light
         </button>
         <button
-          onClick={() => setStatus('Declined')}
+          onClick={() => setStatus("Declined")}
           className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
         >
           Pass
         </button>
       </div>
-      <p className="mb-4"><strong>Status:</strong> {status}</p>
-      {status === 'Approved' && (
+      <p className="mb-4">
+        <strong>Status:</strong> {status}
+      </p>
+      {status === "Approved" && (
         <div className="border p-4 rounded border-green-500">
           <h2 className="text-xl font-semibold mb-2">Match Confirmed!</h2>
           <p className="mb-2">You can now view full details.</p>
-          <p className="mb-2"><strong>Instagram:</strong> {proposal.candidateB.instagram}</p>
+          <p className="mb-2">
+            <strong>Instagram:</strong> {proposal.candidateB.instagram}
+          </p>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push("/dashboard")}
             className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
           >
             Go Back to Dashboard
           </button>
         </div>
       )}
-      {status === 'Declined' && (
+      {status === "Declined" && (
         <div className="border p-4 rounded border-red-500">
           <h2 className="text-xl font-semibold mb-2">Match Declined</h2>
           <button
-            onClick={() => router.push('/dashboard')}
+            onClick={() => router.push("/dashboard")}
             className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
           >
             Go Back to Dashboard
@@ -95,5 +107,8 @@ export default function Match() {
     </div>
   );
 }
+
+
+
 
 

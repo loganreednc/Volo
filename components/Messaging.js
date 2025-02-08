@@ -1,5 +1,5 @@
 // components/Messaging.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import io from "socket.io-client";
 
 let socket;
@@ -8,6 +8,19 @@ export default function Messaging({ candidateId }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Fetch messages function wrapped in useCallback to avoid unnecessary re-renders
+  const fetchMessages = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/messages?candidateId=${candidateId}`);
+      const data = await res.json();
+      setMessages(data);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+    setLoading(false);
+  }, [candidateId]);
 
   useEffect(() => {
     if (!candidateId) return;
@@ -23,19 +36,7 @@ export default function Messaging({ candidateId }) {
     return () => {
       socket.disconnect();
     };
-  }, [candidateId]);
-
-  const fetchMessages = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/messages?candidateId=${candidateId}`);
-      const data = await res.json();
-      setMessages(data);
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-    }
-    setLoading(false);
-  };
+  }, [candidateId, fetchMessages]); // ✅ Added `fetchMessages` to dependencies
 
   const sendMessage = async () => {
     if (newMessage.trim() === "") return;
@@ -93,6 +94,7 @@ export default function Messaging({ candidateId }) {
     </div>
   );
 }
+
 
 
 
