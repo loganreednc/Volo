@@ -3,44 +3,50 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function Dashboard() {
-  // Create a state variable for candidateId, initially null.
-  const [candidateId, setCandidateId] = useState(null);
+  // State to hold the candidate's profile (retrieved from localStorage)
+  const [profile, setProfile] = useState(null);
   const [proposals, setProposals] = useState([]);
 
-  // Use useEffect to access localStorage on the client side.
+  // Use useEffect to safely access localStorage on the client side
   useEffect(() => {
-    // Check if window is defined to ensure we're on the client.
     if (typeof window !== 'undefined') {
-      const storedCandidateId = localStorage.getItem('candidateId');
-      setCandidateId(storedCandidateId);
+      const storedProfile = localStorage.getItem('profile');
+      if (storedProfile) {
+        // Parse and set the candidate profile from localStorage
+        setProfile(JSON.parse(storedProfile));
+      }
     }
   }, []);
 
-  // Fetch match proposals once candidateId is available.
+  // Once the profile is loaded, fetch match proposals using the candidate's _id
   useEffect(() => {
-    if (candidateId) {
-      fetch(`/api/match-proposals?candidateId=${candidateId}`)
+    if (profile && profile._id) {
+      fetch(`/api/match-proposals?candidateId=${profile._id}`)
         .then((res) => res.json())
         .then((data) => setProposals(data))
         .catch((err) => console.error(err));
+    } else if (profile) {
+      // If no _id is found in the profile, set proposals to an empty array
+      setProposals([]);
     }
-  }, [candidateId]);
+  }, [profile]);
 
+  // Handler to respond to a proposal (approve or pass)
   const handleResponse = async (proposalId, candidate, approved) => {
     await fetch('/api/match-proposals', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ proposalId, candidate, approved }),
     });
-    // Refresh proposals after response.
-    const res = await fetch(`/api/match-proposals?candidateId=${candidateId}`);
+    // Refresh proposals after the response
+    const res = await fetch(`/api/match-proposals?candidateId=${profile._id}`);
     const data = await res.json();
     setProposals(data);
   };
 
-  // Until candidateId is set, show a loading message.
-  if (!candidateId) {
-    return <div>Loading...</div>;
+  // If the profile hasn't loaded yet, show a loading message
+  if (!profile) {
+    return <div className="p-4">Loading profile...</div>;
   }
 
   return (
@@ -52,9 +58,9 @@ export default function Dashboard() {
         proposals.map((proposal) => (
           <div key={proposal._id} className="border p-4 rounded mb-4">
             <h2 className="text-xl font-semibold mb-2">
-              {proposal.candidateA._id === candidateId
-                ? proposal.candidateB.name
-                : proposal.candidateA.name}
+              {proposal.candidateA._id === profile._id
+                ? proposal.candidateB.firstName
+                : proposal.candidateA.firstName}
             </h2>
             <p>Status: {proposal.status}</p>
             {proposal.status === 'Pending' && (
@@ -63,7 +69,7 @@ export default function Dashboard() {
                   onClick={() =>
                     handleResponse(
                       proposal._id,
-                      proposal.candidateA._id === candidateId ? 'A' : 'B',
+                      proposal.candidateA._id === profile._id ? 'A' : 'B',
                       true
                     )
                   }
@@ -75,7 +81,7 @@ export default function Dashboard() {
                   onClick={() =>
                     handleResponse(
                       proposal._id,
-                      proposal.candidateA._id === candidateId ? 'A' : 'B',
+                      proposal.candidateA._id === profile._id ? 'A' : 'B',
                       false
                     )
                   }
