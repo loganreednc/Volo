@@ -8,14 +8,13 @@ export default function AdminDashboard() {
   const [selectedMale, setSelectedMale] = useState('');
   const [selectedFemale, setSelectedFemale] = useState('');
   const [selectedCandidate, setSelectedCandidate] = useState('');
-  const [proposalMessage, setProposalMessage] = useState('');
 
-  // Fetch all candidates from the API when the component loads
+  // Fetch all candidates from your API when the component loads
   useEffect(() => {
     fetch('/api/candidates')
       .then((res) => res.json())
       .then((data) => {
-        // Sanitize candidate data to remove any Mongoose metadata
+        // Sanitize candidate data by converting to plain objects
         const plainData = JSON.parse(JSON.stringify(data));
         setCandidates(plainData);
       })
@@ -93,7 +92,6 @@ export default function AdminDashboard() {
         >
           Create Match Proposal
         </button>
-        {proposalMessage && <p className="mt-2">{proposalMessage}</p>}
       </div>
 
       {/* Section 2: Messaging */}
@@ -117,6 +115,7 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
 
 
 
