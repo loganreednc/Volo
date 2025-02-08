@@ -11,6 +11,7 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { candidateAId, candidateBId } = req.body;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const proposal = await MatchProposal.create({
         candidateA: candidateAId,
         candidateB: candidateBId,
@@ -18,6 +19,7 @@ export default async function handler(req, res) {
         candidateBApproved: false,
         status: 'Pending',
       });
+      // The proposal variable is used here in the response
       res.status(201).json(proposal);
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -45,6 +47,7 @@ export default async function handler(req, res) {
     // Expect a body with: proposalId, candidate (either 'A' or 'B'), and approved (true/false)
     const { proposalId, candidate, approved } = req.body;
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const proposal = await MatchProposal.findById(proposalId);
       if (candidate === 'A') {
         proposal.candidateAApproved = approved;
@@ -60,9 +63,9 @@ export default async function handler(req, res) {
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
-  }
-  else {
+  } else {
     // If the method is not supported, return 405 Method Not Allowed.
     res.status(405).json({ message: 'Method not allowed' });
   }
 }
+
