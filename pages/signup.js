@@ -7,43 +7,84 @@ export default function SignUp() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [age, setAge] = useState('');
-  const [gender, setGender] = useState(''); // "male" or "female"
+  const [gender, setGender] = useState('');
   const [city, setCity] = useState('');
-  const [state, setState] = useState('');
+  const [stateLoc, setStateLoc] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [instagram, setInstagram] = useState('');
-  const [profilePic, setProfilePic] = useState(null); // This will hold the file
+  const [profilePic, setProfilePic] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Function to read a file as Base64
+  const handleFileRead = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simple password check:
     if (password !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
-    // Create a candidate profile object (admin fields like email and instagram are stored, but later made admin-only)
-    const profile = {
+    setLoading(true);
+    let photoURL = "";
+    if (profilePic) {
+      try {
+        photoURL = await handleFileRead(profilePic);
+      } catch (error) {
+        console.error("Error reading image file", error);
+      }
+    }
+    const candidateData = {
       firstName,
       lastName,
       age,
       gender,
-      location: { city, state },
+      location: { city, state: stateLoc },
       email,
-      password, // In a real app, password should be hashed on the server side
+      password, // In production, hash the password on the server side.
       instagram,
-      // We'll handle file uploads separately; for now, store the file name or URL placeholder.
-      photoURL: profilePic ? URL.createObjectURL(profilePic) : null,
+      photoURL,
     };
-    // Save profile to localStorage for now (in production, you'd send this to your API)
-    localStorage.setItem('profile', JSON.stringify(profile));
-    router.push('/dashboard');
+
+    // Save candidate to database via API
+    const res = await fetch('/api/candidates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(candidateData),
+    });
+    if (res.ok) {
+      const savedCandidate = await res.json();
+      // Store candidate profile locally for dashboard use
+      localStorage.setItem('profile', JSON.stringify(savedCandidate));
+      // Send welcome email via API
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: savedCandidate.email,
+          subject: "Welcome to Volo!",
+          text: `Hi ${savedCandidate.firstName},\n\nWelcome to Volo! Your account has been created. You can log in with your email (${savedCandidate.email}) and the password you set.\n\nThank you!`
+        }),
+      });
+      setLoading(false);
+      router.push('/dashboard');
+    } else {
+      setLoading(false);
+      alert("Error creating profile");
+    }
   };
 
   return (
-    <div className="max-w-md mx-auto p-4 bg-white shadow rounded mt-4">
-      <h1 className="text-xl font-bold mb-4 text-blue-900">Sign Up</h1>
+    <div className="max-w-md mx-auto p-4 bg-white shadow rounded">
+      <h1 className="text-2xl font-bold mb-6 text-blue-900">Sign Up</h1>
       <form onSubmit={handleSubmit}>
         <label className="block font-medium mb-1">First Name:</label>
         <input
@@ -91,8 +132,8 @@ export default function SignUp() {
         <label className="block font-medium mb-1">State:</label>
         <input
           type="text"
-          value={state}
-          onChange={(e) => setState(e.target.value)}
+          value={stateLoc}
+          onChange={(e) => setStateLoc(e.target.value)}
           className="border p-2 rounded w-full mb-3"
           required
         />
@@ -139,8 +180,9 @@ export default function SignUp() {
         <button
           type="submit"
           className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+          disabled={loading}
         >
-          Create Profile
+          {loading ? "Creating Profile..." : "Create Profile"}
         </button>
       </form>
     </div>

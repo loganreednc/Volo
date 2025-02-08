@@ -6,7 +6,7 @@ export default function Messaging({ candidateId }) {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Function to fetch messages
+  // Fetch messages from API
   const fetchMessages = async () => {
     setLoading(true);
     try {
@@ -33,14 +33,14 @@ export default function Messaging({ candidateId }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          sender: 'admin', // for admin messaging, sender is "admin"
-          receiver: candidateId, // candidateId is the receiver
+          sender: 'admin', // Admin is sending the message
+          receiver: candidateId, // Candidate receives the message
           text: newMessage
         })
       });
       if (res.ok) {
         setNewMessage('');
-        fetchMessages(); // Refresh messages after sending
+        fetchMessages();
       } else {
         console.error('Failed to send message');
       }
@@ -81,4 +81,5 @@ export default function Messaging({ candidateId }) {
     </div>
   );
 }
+
 
