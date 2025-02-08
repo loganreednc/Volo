@@ -1,4 +1,6 @@
 // pages/signup.js
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -62,16 +64,18 @@ export default function SignUp() {
     });
     if (res.ok) {
       const savedCandidate = await res.json();
+      // Convert candidate to a plain object to remove any extra Mongoose metadata
+      const plainCandidate = JSON.parse(JSON.stringify(savedCandidate));
       // Store candidate profile locally for dashboard use
-      localStorage.setItem('profile', JSON.stringify(savedCandidate));
+      localStorage.setItem('profile', JSON.stringify(plainCandidate));
       // Send welcome email via API
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: savedCandidate.email,
+          email: plainCandidate.email,
           subject: "Welcome to Volo!",
-          text: `Hi ${savedCandidate.firstName},\n\nWelcome to Volo! Your account has been created. You can log in with your email (${savedCandidate.email}) and the password you set.\n\nThank you!`
+          text: `Hi ${plainCandidate.firstName},\n\nWelcome to Volo! Your account has been created. You can log in with your email (${plainCandidate.email}) and the password you set.\n\nThank you!`
         }),
       });
       setLoading(false);
@@ -188,6 +192,7 @@ export default function SignUp() {
     </div>
   );
 }
+
 
 
 
