@@ -1,111 +1,156 @@
 // pages/dashboard.js
-export const dynamic = "force-dynamic"; // ✅ Prevent SSR caching issues
-
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 export default function Dashboard() {
-  const [profile, setProfile] = useState(null);
-  const [proposals, setProposals] = useState([]);
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [matches, setMatches] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedProfile = localStorage.getItem("profile");
-      if (storedProfile) {
-        setProfile(JSON.parse(storedProfile));
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError("");
+
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        console.error("❌ No Auth Token Found! Redirecting...");
+        router.push("/login");
+        return;
       }
-      setLoading(false);
-    }
+
+      try {
+        const res = await fetch("/api/profile", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to load profile");
+
+        const data = await res.json();
+        setUser(data.user);
+        setMatches(data.matches || []);
+        setMessages(data.messages || []);
+      } catch (err) {
+        console.error("❌ Profile Fetch Error:", err.message);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
-  useEffect(() => {
-    if (profile && profile._id) {
-      fetch(`/api/match-proposals?candidateId=${profile._id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          // ✅ Convert to JSON-safe format
-          const cleanedProposals = JSON.parse(JSON.stringify(data));
-          setProposals(cleanedProposals);
-        })
-        .catch((err) => console.error(err));
-    }
-  }, [profile]);
+  // Function to calculate age from birthdate
+  const calculateAge = (birthdate) => {
+    if (!birthdate) return "Not Provided";
+    const birthYear = new Date(birthdate).getFullYear();
+    const currentYear = new Date().getFullYear();
+    return currentYear - birthYear;
+  };
 
-  if (loading) {
-    return <div className="p-4">Loading profile...</div>;
-  }
+  const userAge = user?.age || calculateAge(user?.birthdate);
 
-  if (!profile) {
-    return <div className="p-4">No profile found. Please log in.</div>;
-  }
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
-    <div className="max-w-3xl mx-auto p-8 space-y-8">
-      {/* Candidate Profile Section */}
-      <div className="border p-4 rounded flex items-center space-x-4">
-        <Image
-          src={profile.photoURL || "/default-profile.png"} // ✅ Fallback image
-          alt="Profile Picture"
-          width={80}
-          height={80}
-          className="rounded-full object-cover"
-        />
-        <div>
-          <h1 className="text-2xl font-bold">
-            {profile.firstName} {profile.lastName}
-          </h1>
-          <p className="text-gray-600">Age: {profile.age}</p>
-          <p className="text-gray-600">Gender: {profile.gender}</p>
-          <p className="text-gray-600">
-            Location: {profile.location?.city}, {profile.location?.state}
-          </p>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
+        {/* User Profile */}
+        <div className="flex items-center space-x-4">
+          <img
+            src={
+              user?.profileImage && user.profileImage !== "null"
+                ? user.profileImage.startsWith("/uploads/")
+                  ? user.profileImage
+                  : `/uploads/${user.profileImage}`
+                : "/uploads/default-profile.png"
+            }
+            alt="Profile"
+            className="w-24 h-24 rounded-full object-cover border"
+            onError={(e) => (e.target.src = "/uploads/default-profile.png")}
+          />
+          <div>
+            <h1 className="text-2xl font-bold">Welcome, {user.firstName}!</h1>
+            <p className="text-gray-600">{user.city}, {user.state}</p>
+            <p className="text-gray-700 text-sm">Age: {userAge}</p>
+            <p className="text-gray-700 text-sm">Gender: {user.gender}</p>
+            <button
+              onClick={() => router.push("/edit-profile")}
+              className="mt-2 bg-blue-500 text-white py-1 px-3 rounded-md hover:bg-blue-600 transition"
+            >
+              Edit Profile
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Confirmed Matches Section */}
-      <div className="border p-4 rounded">
-        <h2 className="text-xl font-semibold mb-4">Your Confirmed Matches</h2>
-        {proposals.length === 0 ? (
-          <p>No match proposals yet.</p>
-        ) : (
-          proposals.map((proposal) => {
-            const matchedCandidate =
-              proposal.candidateA._id === profile._id
-                ? proposal.candidateB
-                : proposal.candidateA;
-            return (
-              <div key={proposal._id} className="flex items-center space-x-4 mb-4">
-                <Image
-                  src={matchedCandidate.photoURL || "/default-profile.png"} // ✅ Fallback image
-                  alt="Match Profile Picture"
-                  width={80}
-                  height={80}
-                  className="rounded-full object-cover"
-                />
-                <div>
-                  <h3 className="text-lg font-bold">
-                    {matchedCandidate.firstName} {matchedCandidate.lastName}
-                  </h3>
-                  <p className="text-gray-600">
-                    Age: {matchedCandidate.age} | Location: {matchedCandidate.location?.city},{" "}
-                    {matchedCandidate.location?.state}
+        {/* Matches Section */}
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold">Your Matches</h2>
+          {matches.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4 mt-3">
+              {matches.map((match) => (
+                <div key={match.id} className="bg-gray-100 p-3 rounded-md">
+                  <img
+                    src={
+                      match.profileImage && match.profileImage !== "null"
+                        ? match.profileImage.startsWith("/uploads/")
+                          ? match.profileImage
+                          : `/uploads/${match.profileImage}`
+                        : "/uploads/default-profile.png"
+                    }
+                    alt="Match"
+                    className="w-16 h-16 rounded-full object-cover mx-auto"
+                    onError={(e) => (e.target.src = "/uploads/default-profile.png")}
+                  />
+                  <p className="text-center font-medium">
+                    {match.firstName}, {calculateAge(match.birthdate)}
                   </p>
-                  {profile.gender === "male" && (
-                    <p className="text-gray-600">Instagram: {matchedCandidate.instagram}</p>
-                  )}
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 mt-2">No matches yet. Coming soon!</p>
+          )}
+        </div>
 
-      <div>
-        <Link href="/match">
-          <span className="text-blue-500 hover:underline cursor-pointer">View Match Proposal</span>
-        </Link>
+        {/* Messages Section */}
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold">Messages</h2>
+          {messages.length > 0 ? (
+            <div className="mt-3 space-y-3">
+              {messages.map((msg) => (
+                <div key={msg.id} className="bg-blue-100 p-3 rounded-md">
+                  <p className="text-gray-800 font-semibold">{msg.senderName}:</p>
+                  <p className="text-gray-700">{msg.content}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 mt-2">No messages yet.</p>
+          )}
+        </div>
+
+        {/* Logout Button */}
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => {
+              localStorage.removeItem("authToken");
+              router.push("/login");
+            }}
+            className="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition"
+          >
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );

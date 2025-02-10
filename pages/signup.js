@@ -1,200 +1,156 @@
 // pages/signup.js
-export const dynamic = "force-dynamic"; // ✅ Prevents SSR issues
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 
-export default function SignUp() {
+export default function Signup() {
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    city: "",
+    state: "",
+    birthdate: "",
+    gender: "",
+    profileImage: null,
+  });
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
-  const [city, setCity] = useState("");
-  const [stateLoc, setStateLoc] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [profilePic, setProfilePic] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
-  // Function to read a file as Base64
-  const handleFileRead = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+  const handleFileChange = (e) => {
+    setFormData({ ...formData, profileImage: e.target.files[0] });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
-    setLoading(true);
-    let photoURL = "";
-    if (profilePic) {
-      try {
-        photoURL = await handleFileRead(profilePic);
-      } catch (error) {
-        console.error("Error reading image file", error);
-      }
-    }
-    const candidateData = {
-      firstName,
-      lastName,
-      age,
-      gender,
-      location: { city, state: stateLoc },
-      email,
-      password, // In production, hash the password on the server side.
-      instagram,
-      photoURL,
-    };
+    setError("");
+    setSuccess("");
 
-    // Save candidate to database via API
-    const res = await fetch("/api/candidates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(candidateData),
+    if (formData.password !== formData.confirmPassword) {
+      return setError("Passwords do not match");
+    }
+
+    const signupData = new FormData();
+    Object.keys(formData).forEach((key) => {
+      signupData.append(key, formData[key]);
     });
-    if (res.ok) {
-      const savedCandidate = await res.json();
-      localStorage.setItem("profile", JSON.stringify(savedCandidate));
-      await fetch("/api/send-email", {
+
+    try {
+      const res = await fetch("/api/auth/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: savedCandidate.email,
-          subject: "Welcome to Volo!",
-          text: `Hi ${savedCandidate.firstName},\n\nWelcome to Volo! Your account has been created.`,
-        }),
+        body: signupData,
       });
-      setLoading(false);
-      router.push("/dashboard");
-    } else {
-      setLoading(false);
-      alert("Error creating profile");
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Signup failed");
+
+      setSuccess("Signup successful! Redirecting...");
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (err) {
+      setError(err.message);
     }
   };
 
-  if (!isClient) {
-    return <div className="p-4">Loading...</div>;
-  }
-
   return (
-    <div className="max-w-md mx-auto p-4 bg-white shadow rounded">
-      <h1 className="text-2xl font-bold mb-6 text-blue-900">Sign Up</h1>
-      <form onSubmit={handleSubmit}>
-        <label className="block font-medium mb-1">First Name:</label>
-        <input
-          type="text"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">Last Name:</label>
-        <input
-          type="text"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">Age:</label>
-        <input
-          type="number"
-          value={age}
-          onChange={(e) => setAge(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">Gender:</label>
-        <select
-          value={gender}
-          onChange={(e) => setGender(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        >
-          <option value="">Select gender</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-        </select>
-        <label className="block font-medium mb-1">City:</label>
-        <input
-          type="text"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">State:</label>
-        <input
-          type="text"
-          value={stateLoc}
-          onChange={(e) => setStateLoc(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">Email:</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">Password:</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">Confirm Password:</label>
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">Upload Profile Picture:</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setProfilePic(e.target.files[0])}
-          className="border p-2 rounded w-full mb-3"
-          required
-        />
-        <label className="block font-medium mb-1">Instagram Handle:</label>
-        <input
-          type="text"
-          value={instagram}
-          onChange={(e) => setInstagram(e.target.value)}
-          className="border p-2 rounded w-full mb-4"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
-          disabled={loading}
-        >
-          {loading ? "Creating Profile..." : "Create Profile"}
-        </button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
+
+        {success && <p className="text-green-500">{success}</p>}
+        {error && <p className="text-red-500">{error}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name" className="w-full p-2 border rounded" required />
+          <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last Name" className="w-full p-2 border rounded" required />
+          <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className="w-full p-2 border rounded" required />
+          <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Password" className="w-full p-2 border rounded" required />
+          <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm Password" className="w-full p-2 border rounded" required />
+          
+          <input type="text" name="city" value={formData.city} onChange={handleChange} placeholder="City" className="w-full p-2 border rounded" required />
+          
+          {/* State Dropdown */}
+          <select name="state" value={formData.state} onChange={handleChange} className="w-full p-2 border rounded" required>
+            <option value="">Select State</option>
+            <option value="Alabama">Alabama</option>
+            <option value="Alaska">Alaska</option>
+            <option value="Arizona">Arizona</option>
+            <option value="Arkansas">Arkansas</option>
+            <option value="California">California</option>
+            <option value="Colorado">Colorado</option>
+            <option value="Connecticut">Connecticut</option>
+            <option value="Delaware">Delaware</option>
+            <option value="Florida">Florida</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Hawaii">Hawaii</option>
+            <option value="Idaho">Idaho</option>
+            <option value="Illinois">Illinois</option>
+            <option value="Indiana">Indiana</option>
+            <option value="Iowa">Iowa</option>
+            <option value="Kansas">Kansas</option>
+            <option value="Kentucky">Kentucky</option>
+            <option value="Louisiana">Louisiana</option>
+            <option value="Maine">Maine</option>
+            <option value="Maryland">Maryland</option>
+            <option value="Massachusetts">Massachusetts</option>
+            <option value="Michigan">Michigan</option>
+            <option value="Minnesota">Minnesota</option>
+            <option value="Mississippi">Mississippi</option>
+            <option value="Missouri">Missouri</option>
+            <option value="Montana">Montana</option>
+            <option value="Nebraska">Nebraska</option>
+            <option value="Nevada">Nevada</option>
+            <option value="New Hampshire">New Hampshire</option>
+            <option value="New Jersey">New Jersey</option>
+            <option value="New Mexico">New Mexico</option>
+            <option value="New York">New York</option>
+            <option value="North Carolina">North Carolina</option>
+            <option value="North Dakota">North Dakota</option>
+            <option value="Ohio">Ohio</option>
+            <option value="Oklahoma">Oklahoma</option>
+            <option value="Oregon">Oregon</option>
+            <option value="Pennsylvania">Pennsylvania</option>
+            <option value="Rhode Island">Rhode Island</option>
+            <option value="South Carolina">South Carolina</option>
+            <option value="South Dakota">South Dakota</option>
+            <option value="Tennessee">Tennessee</option>
+            <option value="Texas">Texas</option>
+            <option value="Utah">Utah</option>
+            <option value="Vermont">Vermont</option>
+            <option value="Virginia">Virginia</option>
+            <option value="Washington">Washington</option>
+            <option value="West Virginia">West Virginia</option>
+            <option value="Wisconsin">Wisconsin</option>
+            <option value="Wyoming">Wyoming</option>
+          </select>
+
+          <input type="date" name="birthdate" value={formData.birthdate} onChange={handleChange} className="w-full p-2 border rounded" required />
+
+          {/* Gender Dropdown */}
+          <select name="gender" value={formData.gender} onChange={handleChange} className="w-full p-2 border rounded" required>
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+
+          {/* Profile Image Upload */}
+          <input type="file" onChange={handleFileChange} className="w-full p-2 border rounded" />
+
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">Sign Up</button>
+        </form>
+
+        <p className="mt-4 text-center">
+          Already have an account?{" "}
+          <a href="/login" className="text-blue-500 hover:underline">Log in</a>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,40 +1,45 @@
+// pages/api/auth/[...nextauth].js
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { connectToDatabase } from "../../../lib/db";
 import Candidate from "../../../models/Candidate";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export default NextAuth({
   providers: [
     CredentialsProvider({
-      name: "Email & Password",
+      name: "Credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        email: { label: "Email", type: "email", placeholder: "your@email.com" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         await connectToDatabase();
-        const user = await Candidate.findOne({ email: credentials.email }).select("+password");
 
-        if (!user) throw new Error("No user found with this email");
+        const candidate = await Candidate.findOne({ email: credentials.email });
+        if (!candidate) throw new Error("Invalid email or password");
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
-        if (!isValid) throw new Error("Incorrect password");
+        const isValidPassword = await bcrypt.compare(credentials.password, candidate.password);
+        if (!isValidPassword) throw new Error("Invalid email or password");
 
-        return { id: user._id, name: user.firstName, email: user.email };
-      }
-    })
+        return { id: candidate._id, email: candidate.email, name: `${candidate.firstName} ${candidate.lastName}` };
+      },
+    }),
   ],
-  session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) token.id = user.id;
-      return token;
-    },
     async session({ session, token }) {
       session.user.id = token.id;
       return session;
-    }
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
   },
-  secret: process.env.NEXTAUTH_SECRET
+  secret: process.env.NEXTAUTH_SECRET,
+  pages: { signIn: "/login", error: "/login" },
+  session: { strategy: "jwt" },
+  debug: process.env.NODE_ENV === "development",
 });
