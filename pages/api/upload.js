@@ -1,4 +1,3 @@
-// pages/api/upload.js
 import nc from "next-connect"; // ✅ FIXED import
 import multer from "multer";
 import path from "path";

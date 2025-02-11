@@ -1,6 +1,6 @@
-// pages/signup.js
 import { useState } from "react";
 import { useRouter } from "next/router";
+import Head from 'next/head';
 
 export default function Signup() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function Signup() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,8 +34,10 @@ export default function Signup() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    setLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
+      setLoading(false);
       return setError("Passwords do not match");
     }
 
@@ -50,17 +53,24 @@ export default function Signup() {
       });
 
       const data = await res.json();
+      setLoading(false);
+
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
       setSuccess("Signup successful! Redirecting...");
       setTimeout(() => router.push("/login"), 2000);
     } catch (err) {
+      setLoading(false);
       setError(err.message);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Head>
+        <title>Sign Up - Volo</title>
+        <meta name="description" content="Create an account on Volo." />
+      </Head>
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
 
@@ -143,7 +153,9 @@ export default function Signup() {
           {/* Profile Image Upload */}
           <input type="file" onChange={handleFileChange} className="w-full p-2 border rounded" />
 
-          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">Sign Up</button>
+          <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">
+            {loading ? "Signing up..." : "Sign Up"}
+          </button>
         </form>
 
         <p className="mt-4 text-center">

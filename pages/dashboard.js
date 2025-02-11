@@ -1,6 +1,6 @@
-// pages/dashboard.js
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Image from 'next/image';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -56,9 +57,34 @@ export default function Dashboard() {
     return currentYear - birthYear;
   };
 
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: newMessage }),
+      });
+
+      if (!res.ok) throw new Error("Failed to send message");
+
+      const data = await res.json();
+      setMessages([...messages, data.message]);
+      setNewMessage("");
+    } catch (err) {
+      console.error("❌ Send Message Error:", err.message);
+      setError(err.message);
+    }
+  };
+
   const userAge = user?.age || calculateAge(user?.birthdate);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="loader"></div></div>;
   if (error) return <p className="text-red-500">{error}</p>;
 
   return (
@@ -66,7 +92,7 @@ export default function Dashboard() {
       <div className="max-w-3xl mx-auto bg-white shadow-md rounded-lg p-6">
         {/* User Profile */}
         <div className="flex items-center space-x-4">
-          <img
+          <Image
             src={
               user?.profileImage && user.profileImage !== "null"
                 ? user.profileImage.startsWith("/uploads/")
@@ -75,6 +101,8 @@ export default function Dashboard() {
                 : "/uploads/default-profile.png"
             }
             alt="Profile"
+            width={96}
+            height={96}
             className="w-24 h-24 rounded-full object-cover border"
             onError={(e) => (e.target.src = "/uploads/default-profile.png")}
           />
@@ -99,7 +127,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-2 gap-4 mt-3">
               {matches.map((match) => (
                 <div key={match.id} className="bg-gray-100 p-3 rounded-md">
-                  <img
+                  <Image
                     src={
                       match.profileImage && match.profileImage !== "null"
                         ? match.profileImage.startsWith("/uploads/")
@@ -108,6 +136,8 @@ export default function Dashboard() {
                         : "/uploads/default-profile.png"
                     }
                     alt="Match"
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-full object-cover mx-auto"
                     onError={(e) => (e.target.src = "/uploads/default-profile.png")}
                   />
@@ -137,6 +167,20 @@ export default function Dashboard() {
           ) : (
             <p className="text-gray-500 mt-2">No messages yet.</p>
           )}
+          <div className="mt-4">
+            <textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              placeholder="Type a message..."
+            />
+            <button
+              onClick={handleSendMessage}
+              className="mt-2 bg-green-500 text-white py-1 px-3 rounded-md hover:bg-green-600 transition"
+            >
+              Send
+            </button>
+          </div>
         </div>
 
         {/* Logout Button */}

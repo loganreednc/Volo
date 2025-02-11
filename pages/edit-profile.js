@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Image from 'next/image';
 
 export default function EditProfile() {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [profileImagePreview, setProfileImagePreview] = useState("");
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -22,8 +25,11 @@ export default function EditProfile() {
 
         const data = await res.json();
         setUser(data.user);
+        setProfileImagePreview(data.user.profileImage);
       } catch (err) {
         setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -35,13 +41,25 @@ export default function EditProfile() {
   };
 
   const handleFileChange = (e) => {
-    setUser({ ...user, profileImage: e.target.files[0] });
+    const file = e.target.files[0];
+    setUser({ ...user, profileImage: file });
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!user.firstName || !user.lastName || !user.city || !user.state || !user.birthdate || !user.gender) {
+      setError("All fields are required");
+      return;
+    }
 
     const token = localStorage.getItem("authToken");
     if (!token) return router.push("/login");
@@ -65,6 +83,8 @@ export default function EditProfile() {
     }
   };
 
+  if (loading) return <div className="flex justify-center items-center min-h-screen"><div className="loader"></div></div>;
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md">
@@ -85,6 +105,11 @@ export default function EditProfile() {
             <option value="female">Female</option>
           </select>
           <input type="file" onChange={handleFileChange} className="w-full p-2 border rounded" />
+          {profileImagePreview && (
+            <div className="flex justify-center mt-4">
+              <Image src={profileImagePreview} alt="Profile Preview" width={100} height={100} className="rounded-full" />
+            </div>
+          )}
           <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition">Update Profile</button>
         </form>
       </div>

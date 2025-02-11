@@ -4,9 +4,16 @@
   "scripts": {
     "dev": "node -r dotenv/config node_modules/next/dist/bin/next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write .",
+    "type-check": "tsc --noEmit",
+    "prepare": "husky install"
   },
   "dependencies": {
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
     "formidable": "^3.5.2",
@@ -27,7 +34,24 @@
     "@types/react": "19.0.8",
     "@types/socket.io-client": "^1.4.36",
     "autoprefixer": "^10.4.20",
+    "eslint": "^8.35.0",
+    "eslint-config-next": "^12.1.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^12.4.1",
+    "prettier": "^2.8.4",
     "tailwindcss": "^3.4.17",
+    "ts-node": "^10.9.2",
     "typescript": "5.7.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
   }
 }

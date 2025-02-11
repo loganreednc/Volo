@@ -1,4 +1,3 @@
-// pages/match.js
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";

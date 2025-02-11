@@ -12,7 +12,7 @@ export default function AdminMatching() {
         const res = await fetch("/api/candidates");
         if (!res.ok) throw new Error("Failed to fetch candidates");
         const data = await res.json();
-        setCandidates(data);
+        setCandidates(data.candidates || []);
       } catch (err) {
         console.error("❌ Fetch Error:", err.message);
       }
